@@ -1,0 +1,38 @@
+
+
+
+
+
+初始化的过程：shard分片规则进行初始化 进行解析 执行引擎开启
+io.shardingsphere.shardingjdbc.api.ShardingDataSourceFactory.createDataSource
+ >io.shardingsphere.core.rule.ShardingRule.ShardingRule 总
+   >io.shardingsphere.core.rule.TableRule.TableRule(io.shardingsphere.api.config.TableRuleConfiguration, io.shardingsphere.core.rule.ShardingDataSourceNames)
+
+
+执行的过程：
+   io.shardingsphere.shardingjdbc.jdbc.core.statement.ShardingStatement.executeQuery
+    >io.shardingsphere.shardingjdbc.jdbc.core.statement.ShardingStatement.sqlRoute
+     >io.shardingsphere.core.routing.StatementRoutingEngine
+       >io.shardingsphere.core.routing.router.sharding.ShardingRouterFactory.createSQLRouter
+        >io.shardingsphere.core.routing.StatementRoutingEngine.route
+sql解析：io.shardingsphere.core.routing.router.sharding.ParsingSQLRouter.parse
+     >io.shardingsphere.core.routing.SQLRouteResult
+  sql路由：              > io.shardingsphere.core.routing.router.sharding.ParsingSQLRouter.route(io.shardingsphere.core.parsing.parser.sql.SQLStatement, io.shardingsphere.core.optimizer.condition.ShardingConditions)
+            >io.shardingsphere.core.routing.type.standard.StandardRoutingEngine.route() 标准的路由
+               >io.shardingsphere.core.routing.type.standard.StandardRoutingEngine.routeByShardingConditions
+                 >io.shardingsphere.core.routing.strategy.ShardingStrategy.doSharding
+                  >io.shardingsphere.core.routing.type.standard.StandardRoutingEngine.route(io.shardingsphere.core.rule.TableRule, java.util.List<io.shardingsphere.api.algorithm.sharding.ShardingValue>, java.util.List<io.shardingsphere.api.algorithm.sharding.ShardingValue>) 小作业
+sql重写：
+    io.shardingsphere.core.rewrite.SQLRewriteEngine.rewrite
+       >io.shardingsphere.core.rewrite.SQLRewriteEngine.generateSQL
+         >io.shardingsphere.core.rewrite.SQLBuilder.toSQL(io.shardingsphere.core.routing.type.TableUnit, java.util.Map<java.lang.String,java.lang.String>, io.shardingsphere.core.rule.ShardingRule, io.shardingsphere.core.metadata.datasource.ShardingDataSourceMetaData)
+sql执行：
+io.shardingsphere.shardingjdbc.executor.StatementExecutor.executeQuery>
+  io.shardingsphere.shardingjdbc.executor.StatementExecutor.getQueryResult
+sql合并：
+  io.shardingsphere.core.merger.dql.DQLMergeEngine.merge
+    >io.shardingsphere.core.merger.dql.DQLMergeEngine.build
+
+读写分离：
+    io.shardingsphere.core.routing.router.masterslave.MasterSlaveRouter.route(java.lang.String)
+      >io.shardingsphere.core.parsing.SQLJudgeEngine.judge
